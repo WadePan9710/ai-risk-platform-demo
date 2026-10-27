@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 风控策略驾驶舱（Demo）</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0 }
+body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f6; color: #1f2937; padding: 24px }
+h1 { font-size: 1.3rem; margin-bottom: 4px }
+.sub { font-size: 11px; color: #9ca3af; margin-bottom: 16px }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px }
+.card h3 { font-size: 12px; color: #6b7280; margin-bottom: 8px }
+.card .big { font-size: 1.8rem; font-weight: 600 }
+.card .foot { font-size: 10px; color: #d1d5db; margin-top: 4px }
+.red { color: #ef4444 } .green { color: #10b981 } .amber { color: #f59e0b } .violet { color: #8b5cf6 }
+table { width: 100%; border-collapse: collapse; font-size: 12px }
+th { text-align: left; color: #9ca3af; font-weight: normal; padding: 4px 8px; border-bottom: 1px solid #f3f4f6 }
+td { padding: 6px 8px; border-bottom: 1px solid #f9fafb }
+.mono { font-family: monospace; font-size: 11px }
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600 }
+section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px }
+section h2 { font-size: 14px; margin-bottom: 8px }
+.note { font-size: 10px; color: #d1d5db; border-top: 1px solid #f9fafb; padding-top: 6px; margin-top: 8px }
+.filter { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12px; color: #6b7280 }
+.filter input[type=date] { border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 8px; font-size: 12px }
+.filter button { padding: 6px 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px }
+.filter button:hover { background: #1d4ed8 }
+.filter .clear { background: none; color: #3b82f6; border: none; text-decoration: underline; padding: 0 }
+</style>
+</head>
+<body>
+<h1>AI 风控策略驾驶舱（Demo）</h1>
+<p class="sub">零真实数据 · 合成数据由种子生成 · 接口契约与生产版一致</p>
+
+<div class="filter">
+  <span>③④ 按到期时间：</span>
+  <input type="date" id="fFrom">
+  <span>~</span>
+  <input type="date" id="fTo">
+  <button onclick="loadKpi()">筛选</button>
+  <button class="clear" onclick="document.getElementById('fFrom').value='';document.getElementById('fTo').value='';loadKpi()">重置</button>
+</div>
+
+<div id="app">加载中…</div>
+
+<script>
+const fmt = (v, suffix) => v != null ? v + (suffix ?? '') : '—'
+
+async function loadKpi() {
+  const from = document.getElementById('fFrom').value
+  const to = document.getElementById('fTo').value
+  const q = []
+  if (from) q.push(`dueFrom=${from}`)
+  if (to) q.push(`dueTo=${to}`)
+  const r = await fetch(`/api/kpi${q.length ? '?' + q.join('&') : ''}`)
+  const d = await r.json()
+  if (!d.ok) { document.getElementById('app').innerHTML = `<div class="card"><span class="red">${d.error ?? '加载失败'}</span></div>`; return }
+  render(d)
+}
+
+function render(d) {
+  const c = d
+  const rows = c.card3.series.slice(-6).map((w) => {
+    const obs = w.foComparable == null
+    return `<tr><td class="mono">${w.week}</td><td>${w.n}</td><td>${w.firstOverdueRate ?? '—'}%</td><td>${w.dpd7Rate ?? '—'}%</td><td>${w.soft7Rate ?? '—'}%</td></tr>`
+  }).join('')
+  const tierRows = c.card4.tierTable.map((r) => {
+    const foOk = r.EGDue1 >= 10 || r.CGDue1 >= 10
+    return `<tr><td class="mono font-bold">${r.tier}</td>
+      <td>${r.EGDecisions} / ${r.EGLoans} / ${r.EGDue1}</td>
+      <td class="${(r.EGFO ?? 99) < (r.CGFO ?? 99) ? 'green' : 'red'}">${r.EGFO ?? '—'}%</td>
+      <td class="mono">${r.EGFONum}/${r.EGDue1}</td>
+      <td>${r.CGDecisions} / ${r.CGLoans} / ${r.CGDue1}</td>
+      <td class="${(r.CGFO ?? 99) < (r.EGFO ?? 99) ? 'green' : 'red'}">${r.CGFO ?? '—'}%</td>
+      <td class="mono">${r.CGFONum}/${r.CGDue1}</td></tr>`
+  }).join('')
+
+  document.getElementById('app').innerHTML = `
+    <div class="grid">
+      <div class="card"><h3>① 放款单数 / 通过率</h3><div class="big">${c.card1.loans}</div><div class="foot">通过率 ${c.card1.approvalRate ?? '—'}%（${c.card1.approved}/${c.card1.decisions}）</div></div>
+      <div class="card"><h3>② 老客首逾率（T+1 主线）</h3><div class="big">${c.card2.latestRate ?? '—'}%</div><div class="foot">${c.card2.latestWeek} · n=${c.card2.latestN} · 环比 ${c.card2.diff > 0 ? '+' : ''}${c.card2.diff}pp</div></div>
+      <div class="card"><h3>③ soft7 成熟对照</h3><div class="big">${c.card2.soft7Ref?.latest ?? '—'}%</div><div class="foot">soft7 = 到期≥7天 未结清或展期</div></div>
+      <div class="card"><h3>④ EG/CG 分档可检验</h3><div class="big">${c.card4.power.testable}/6</div><div class="foot">min n≥${c.card4.power.minN} · 显著 ${c.card4.power.significant}/6</div></div>
+    </div>
+
+    <section>
+      <h2>EG/CG 分档首逾期率对比（分子分母同时下发）</h2>
+      <table><thead><tr><th>档</th><th>EG 决策/放款/到期≥1天</th><th>EG 首逾期率%</th><th>CG 决策/放款/到期≥1天</th><th>CG 首逾期率%</th></tr></thead>
+      <tbody>${tierRows}</tbody></table>
+      <p class="note">首逾 = 到期≥1天未结清（T+1 可判）· 样本过小的档不参与比较</p>
+    </section>
+
+    <section>
+      <h2>老客首逾期周趋势</h2>
+      <table><thead><tr><th>到期周</th><th>单数</th><th>首逾期率%</th><th>dpd7%</th><th>soft7%</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </section>`
+}
+
+loadKpi()
+</script>
+</body>
+</html>

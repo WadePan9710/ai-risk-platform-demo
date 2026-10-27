@@ -1,0 +1,14 @@
+{
+  "name": "ai-risk-platform-demo",
+  "version": "1.0.0",
+  "description": "AI 风控策略驾驶舱（脱敏 demo）：首逾期主线 + EG/CG 统计功效 + fail-loudly 契约 + 规则质量周报",
+  "type": "module",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
