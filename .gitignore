@@ -8,3 +8,17 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+.venv/
+data/
+.pytest_cache/
+*.egg-info/
+screenshots/desktop.png
+screenshots/desktop2.png
+screenshots/agent-mobile.png
+screenshots/agent-mobile2.png
+screenshots/agent-mobile3.png
+screenshots/agent-mobile4.png
+screenshots/company-agent.png
+screenshots/agent-desktop.png
+screenshots/unified-mobile.png
+screenshots/unified-mobile2.png

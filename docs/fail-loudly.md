@@ -1,21 +1,25 @@
-# Fail-Loudly 数据源契约模式
+# Fail-loudly contract
 
-## 核心原则
+The demo must show missing or immature data explicitly instead of replacing it with zero.
 
-数据管道下游（页面/KPI 复算）依赖上游产物的特定字段。当上游字段缺失/类型不符/文件不存在时，**禁止静默兜底**（填 0/空串/跳过），必须显式上报 `数据源未就绪：<字段>` 让用户知道数据不完整。
+## Rules
 
-## 为什么不用 try-catch 静默兜底
+1. A ratio without a denominator is `null`, never `0`.
+2. A weekly metric is not comparable until the week is complete and T+1 has passed.
+3. A tier cell with fewer than 10 due loans per group remains visible with numerator/denominator but is not tested.
+4. A model with unknown direction or insufficient sample returns a neutral verdict.
+5. An Agent answer includes a caveat when it relies on synthetic data.
+6. A pending write action has `executed=false` until `Command(resume=...)` is approved.
 
-一次静默兜底 = 用户看到"正常"但数据是假的。真实教训：模型体检 AUC=0.494 接近随机但一直被"样本不足"的标签掩盖了 3 周——如果 fail-loudly 从第一天就生效，这个问题当天就会被看到。
+## UI behavior
 
-## 契约文件示例（platform/契约_data源读取项.md）
+- `null` renders as `—`.
+- Sample gates render as `sample gate`.
+- Small samples render as `待观察`, not a negative risk conclusion.
+- HTTP/API failures render an explicit error block.
 
-每份契约逐字段列出：
-- 字段名/类型/生产者
-- 平台用途
-- 缺失时行为（`missing:[字段名]` 显式上报，页面渲染"数据源未就绪"标签）
-- 数值字段 null/undefined 的处理规则（AUC=null 渲染为 `—`，**绝不渲染为 0**）
+## API behavior
 
-## 平台实现
-
-server/kpi 层每个函数的第一件事是校验输入的完整性和类型，缺失即返回 `{ok:false, missing:[...]}` 而非返回带默认值的假数据。前端对接这些 `missing` 字段渲染"数据源未就绪"标签，用 amber 色提示用户。
+- Invalid run IDs return `404`.
+- Invalid approval decision is rejected by Pydantic validation.
+- Health endpoint reports the actual runtime stack.

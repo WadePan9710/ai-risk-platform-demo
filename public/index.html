@@ -1,105 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 风控策略驾驶舱（Demo）</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0 }
-body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f6; color: #1f2937; padding: 24px }
-h1 { font-size: 1.3rem; margin-bottom: 4px }
-.sub { font-size: 11px; color: #9ca3af; margin-bottom: 16px }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px }
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px }
-.card h3 { font-size: 12px; color: #6b7280; margin-bottom: 8px }
-.card .big { font-size: 1.8rem; font-weight: 600 }
-.card .foot { font-size: 10px; color: #d1d5db; margin-top: 4px }
-.red { color: #ef4444 } .green { color: #10b981 } .amber { color: #f59e0b } .violet { color: #8b5cf6 }
-table { width: 100%; border-collapse: collapse; font-size: 12px }
-th { text-align: left; color: #9ca3af; font-weight: normal; padding: 4px 8px; border-bottom: 1px solid #f3f4f6 }
-td { padding: 6px 8px; border-bottom: 1px solid #f9fafb }
-.mono { font-family: monospace; font-size: 11px }
-.badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600 }
-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px }
-section h2 { font-size: 14px; margin-bottom: 8px }
-.note { font-size: 10px; color: #d1d5db; border-top: 1px solid #f9fafb; padding-top: 6px; margin-top: 8px }
-.filter { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12px; color: #6b7280 }
-.filter input[type=date] { border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 8px; font-size: 12px }
-.filter button { padding: 6px 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px }
-.filter button:hover { background: #1d4ed8 }
-.filter .clear { background: none; color: #3b82f6; border: none; text-decoration: underline; padding: 0 }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="RiskPilot unified agentic risk platform demo">
+  <title>RiskPilot · Unified Agent Workspace</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/workspace.css">
 </head>
 <body>
-<h1>AI 风控策略驾驶舱（Demo）</h1>
-<p class="sub">零真实数据 · 合成数据由种子生成 · 接口契约与生产版一致</p>
+  <main class="shell app-shell">
+    <header class="topbar app-topbar">
+      <div class="brand">
+        <div class="brand-mark">RP</div>
+        <div>
+          <h1 class="brand-title">RiskPilot</h1>
+          <p class="brand-sub">Unified risk platform · synthetic data · one agent</p>
+        </div>
+      </div>
+      <div class="status-row">
+        <span class="status">FastAPI <strong>online</strong></span>
+        <span class="status">LangGraph <strong>tool graph</strong></span>
+        <span class="status">LangChain <strong>optional</strong></span>
+        <span class="status" id="workspace-time">loading</span>
+      </div>
+    </header>
 
-<div class="filter">
-  <span>③④ 按到期时间：</span>
-  <input type="date" id="fFrom">
-  <span>~</span>
-  <input type="date" id="fTo">
-  <button onclick="loadKpi()">筛选</button>
-  <button class="clear" onclick="document.getElementById('fFrom').value='';document.getElementById('fTo').value='';loadKpi()">重置</button>
-</div>
+    <div class="workspace-grid">
+      <aside class="sidebar">
+        <div class="sidebar-label">Workspace</div>
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="strategy">Strategy</button>
+        <button class="nav-item" data-view="models">Models</button>
+        <button class="nav-item" data-view="features">Feature development</button>
+        <button class="nav-item" data-view="lineage">Variable lineage</button>
+        <button class="nav-item" data-view="cases">Cases & disposition</button>
+        <button class="nav-item" data-view="knowledge">Knowledge</button>
+        <button class="nav-item" data-view="audit">Audit</button>
+        <div class="sidebar-foot"><span class="chip good">synthetic</span><span class="chip">read-only</span></div>
+      </aside>
 
-<div id="app">加载中…</div>
+      <div class="workspace-main">
+        <section class="view active" id="view-overview">
+          <header class="view-head"><div><p class="eyebrow">01 / Portfolio overview</p><h2 class="view-title">Risk performance at a glance</h2><p class="subtitle">First-overdue mainline, EG/CG experiment health and model status from the same deterministic data layer.</p></div><span class="chip good" id="overview-health">loading</span></header>
+          <div class="metric-grid">
+            <article class="surface metric"><div class="metric-label">DECISIONS</div><div class="metric-value" id="m-decisions">—</div><div class="metric-note">synthetic credit decisions</div></article>
+            <article class="surface metric"><div class="metric-label">APPROVAL RATE</div><div class="metric-value" id="m-approval">—</div><div class="metric-note" id="m-approval-note">approved / decisions</div></article>
+            <article class="surface metric"><div class="metric-label">FIRST OVERDUE · DPD1+</div><div class="metric-value" id="m-fo">—</div><div class="metric-note" id="m-fo-note">first payment due ≥1 day</div></article>
+            <article class="surface metric"><div class="metric-label">RULE QUALITY</div><div class="metric-value" id="m-rules">—</div><div class="metric-note" id="m-rules-note">testable / total</div></article>
+          </div>
+          <div class="two-col">
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow">Trend</p><h3 class="title">First-overdue weekly series</h3></div><span class="chip">T+1</span></div><div class="panel-body"><div class="sparkline" id="sparkline"></div><div class="legend"><span id="trend-start">—</span><span id="trend-end">—</span></div></div></section>
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow">Cohorts</p><h3 class="title">EG / CG tier comparison</h3></div><span class="chip" id="window-chip">—</span></div><div class="panel-body table-wrap"><table><thead><tr><th>Tier</th><th class="num">EG due</th><th class="num">EG FO</th><th class="num">CG due</th><th class="num">CG FO</th><th>Test</th></tr></thead><tbody id="tier-rows"></tbody></table></div></section>
+          </div>
+        </section>
 
-<script>
-const fmt = (v, suffix) => v != null ? v + (suffix ?? '') : '—'
+        <section class="view" id="view-strategy">
+          <header class="view-head"><div><p class="eyebrow">02 / Strategy</p><h2 class="view-title">Versioned strategy control</h2><p class="subtitle">Strategy versions, rules, ownership and empirical rule-quality evidence.</p></div></header>
+          <section class="surface"><div class="panel-body table-wrap"><table><thead><tr><th>Strategy</th><th>Version</th><th>Group</th><th>Status</th><th>Rules</th><th class="num">Hit rate</th><th>Owner</th></tr></thead><tbody id="strategy-rows"></tbody></table></div></section>
+          <section class="surface"><div class="surface-head"><div><p class="eyebrow">Rule quality</p><h3 class="title">Hit vs same-base control</h3></div></div><div class="panel-body table-wrap"><table><thead><tr><th>Rule</th><th>Base</th><th class="num">Hit n</th><th class="num">Hit FO</th><th class="num">Control FO</th><th class="num">Δ pp</th><th>Verdict</th></tr></thead><tbody id="rule-rows"></tbody></table></div></section>
+        </section>
 
-async function loadKpi() {
-  const from = document.getElementById('fFrom').value
-  const to = document.getElementById('fTo').value
-  const q = []
-  if (from) q.push(`dueFrom=${from}`)
-  if (to) q.push(`dueTo=${to}`)
-  const r = await fetch(`/api/kpi${q.length ? '?' + q.join('&') : ''}`)
-  const d = await r.json()
-  if (!d.ok) { document.getElementById('app').innerHTML = `<div class="card"><span class="red">${d.error ?? '加载失败'}</span></div>`; return }
-  render(d)
-}
+        <section class="view" id="view-models">
+          <header class="view-head"><div><p class="eyebrow">03 / Models</p><h2 class="view-title">Model risk register</h2><p class="subtitle">AUC is shown with sample size and decision status.</p></div><span class="chip" id="model-summary">—</span></header>
+          <section class="surface"><div class="panel-body table-wrap"><table><thead><tr><th>Model</th><th>Path</th><th class="num">n</th><th class="num">AUC</th><th>Verdict</th><th>Source table</th></tr></thead><tbody id="model-rows"></tbody></table></div></section>
+        </section>
 
-function render(d) {
-  const c = d
-  const rows = c.card3.series.slice(-6).map((w) => {
-    const obs = w.foComparable == null
-    return `<tr><td class="mono">${w.week}</td><td>${w.n}</td><td>${w.firstOverdueRate ?? '—'}%</td><td>${w.dpd7Rate ?? '—'}%</td><td>${w.soft7Rate ?? '—'}%</td></tr>`
-  }).join('')
-  const tierRows = c.card4.tierTable.map((r) => {
-    const foOk = r.EGDue1 >= 10 || r.CGDue1 >= 10
-    return `<tr><td class="mono font-bold">${r.tier}</td>
-      <td>${r.EGDecisions} / ${r.EGLoans} / ${r.EGDue1}</td>
-      <td class="${(r.EGFO ?? 99) < (r.CGFO ?? 99) ? 'green' : 'red'}">${r.EGFO ?? '—'}%</td>
-      <td class="mono">${r.EGFONum}/${r.EGDue1}</td>
-      <td>${r.CGDecisions} / ${r.CGLoans} / ${r.CGDue1}</td>
-      <td class="${(r.CGFO ?? 99) < (r.EGFO ?? 99) ? 'green' : 'red'}">${r.CGFO ?? '—'}%</td>
-      <td class="mono">${r.CGFONum}/${r.CGDue1}</td></tr>`
-  }).join('')
+        <section class="view" id="view-features">
+          <header class="view-head"><div><p class="eyebrow">04 / Feature development</p><h2 class="view-title">Feature inventory and development jobs</h2><p class="subtitle">Online features, candidate value, PSI alerts, IV/KS and missing-rate controls.</p></div></header>
+          <div class="metric-grid compact">
+            <article class="surface metric"><div class="metric-label">FEATURES</div><div class="metric-value" id="f-total">—</div><div class="metric-note">registered</div></article>
+            <article class="surface metric"><div class="metric-label">ONLINE</div><div class="metric-value" id="f-online">—</div><div class="metric-note">in production use</div></article>
+            <article class="surface metric"><div class="metric-label">CANDIDATES</div><div class="metric-value" id="f-candidate">—</div><div class="metric-note">under evaluation</div></article>
+            <article class="surface metric"><div class="metric-label">PSI ALERTS</div><div class="metric-value" id="f-psi">—</div><div class="metric-note">stability review</div></article>
+          </div>
+          <section class="surface"><div class="surface-head"><div><p class="eyebrow">Catalog</p><h3 class="title">Feature quality</h3></div><div class="toolbar"><button class="filter active" data-fstatus="all">All</button><button class="filter" data-fstatus="online">Online</button><button class="filter" data-fstatus="candidate">Candidates</button></div></div><div class="panel-body table-wrap"><table><thead><tr><th>Feature</th><th>Domain</th><th>Source</th><th>Status</th><th class="num">Missing</th><th class="num">IV</th><th class="num">KS</th><th class="num">PSI</th></tr></thead><tbody id="feature-rows"></tbody></table></div></section>
+          <section class="surface"><div class="surface-head"><div><p class="eyebrow">Jobs</p><h3 class="title">Feature-development runs</h3></div></div><div class="panel-body" id="feature-jobs"></div></section>
+        </section>
 
-  document.getElementById('app').innerHTML = `
-    <div class="grid">
-      <div class="card"><h3>① 放款单数 / 通过率</h3><div class="big">${c.card1.loans}</div><div class="foot">通过率 ${c.card1.approvalRate ?? '—'}%（${c.card1.approved}/${c.card1.decisions}）</div></div>
-      <div class="card"><h3>② 老客首逾率（T+1 主线）</h3><div class="big">${c.card2.latestRate ?? '—'}%</div><div class="foot">${c.card2.latestWeek} · n=${c.card2.latestN} · 环比 ${c.card2.diff > 0 ? '+' : ''}${c.card2.diff}pp</div></div>
-      <div class="card"><h3>③ soft7 成熟对照</h3><div class="big">${c.card2.soft7Ref?.latest ?? '—'}%</div><div class="foot">soft7 = 到期≥7天 未结清或展期</div></div>
-      <div class="card"><h3>④ EG/CG 分档可检验</h3><div class="big">${c.card4.power.testable}/6</div><div class="foot">min n≥${c.card4.power.minN} · 显著 ${c.card4.power.significant}/6</div></div>
+        <section class="view" id="view-lineage">
+          <header class="view-head"><div><p class="eyebrow">05 / Data lineage</p><h2 class="view-title">Source to decision lineage</h2><p class="subtitle">A compact DAG from source tables through features, metrics, models and decision output.</p></div><span class="chip" id="lineage-summary">—</span></header>
+          <section class="surface"><div class="panel-body"><div class="lineage-canvas" id="lineage-canvas"></div></div></section>
+          <section class="surface"><div class="surface-head"><div><p class="eyebrow">Edges</p><h3 class="title">Transformation contract</h3></div></div><div class="panel-body table-wrap"><table><thead><tr><th>From</th><th>To</th><th>Rule</th></tr></thead><tbody id="lineage-rows"></tbody></table></div></section>
+        </section>
+
+        <section class="view" id="view-cases">
+          <header class="view-head"><div><p class="eyebrow">06 / Operations</p><h2 class="view-title">Cases and disposition</h2><p class="subtitle">Case queue, SLA, evidence count and human-owned actions.</p></div></header>
+          <div class="metric-grid compact">
+            <article class="surface metric"><div class="metric-label">CASES</div><div class="metric-value" id="c-total">—</div><div class="metric-note">total</div></article>
+            <article class="surface metric"><div class="metric-label">OPEN</div><div class="metric-value" id="c-open">—</div><div class="metric-note">awaiting action</div></article>
+            <article class="surface metric"><div class="metric-label">HIGH RISK</div><div class="metric-value" id="c-high">—</div><div class="metric-note">priority queue</div></article>
+            <article class="surface metric"><div class="metric-label">FALSE POSITIVE</div><div class="metric-value" id="c-fp">—</div><div class="metric-note">reviewed</div></article>
+          </div>
+          <section class="surface"><div class="panel-body table-wrap"><table><thead><tr><th>Case</th><th>Subject</th><th>Title</th><th>Level</th><th>SLA</th><th>Evidence</th><th>Status</th></tr></thead><tbody id="case-rows"></tbody></table></div></section>
+        </section>
+
+        <section class="view" id="view-knowledge">
+          <header class="view-head"><div><p class="eyebrow">07 / Knowledge layer</p><h2 class="view-title">Approved knowledge, cited answers</h2><p class="subtitle">The same agent searches policy files, refuses unsupported answers and blocks sensitive actions.</p></div><span class="chip good" id="knowledge-count">—</span></header>
+          <div class="two-col">
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow">Documents</p><h3 class="title">Approved scope</h3></div></div><div class="panel-body doc-list" id="doc-list"></div></section>
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow">Grounded Q&A</p><h3 class="title">Ask the knowledge tool</h3></div></div><div class="panel-body"><form class="composer" id="knowledge-form"><input id="knowledge-question" placeholder="例如：报销流程是什么？" maxlength="300"><button class="primary" type="submit">Search</button></form><div id="knowledge-output" class="knowledge-empty">Ask an internal policy question.</div></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="view-audit">
+          <header class="view-head"><div><p class="eyebrow">08 / Governance</p><h2 class="view-title">Audit trail</h2><p class="subtitle">Action ownership and review state from the synthetic platform record.</p></div><span class="chip" id="audit-summary">—</span></header>
+          <section class="surface"><div class="panel-body table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Object</th><th>Result</th></tr></thead><tbody id="audit-rows"></tbody></table></div></section>
+        </section>
+      </div>
+
+      <aside class="agent-rail">
+        <div class="agent-rail-head"><div><p class="eyebrow">Unified agent</p><h2 class="title">Risk copilot</h2></div><span class="chip good" id="agent-mode">ready</span></div>
+        <p class="subtitle">One graph routes to portfolio, strategy, models, features, lineage, cases, audit or knowledge.</p>
+        <div class="suggestions agent-suggestions">
+          <button class="suggestion" data-question="组合风险本周怎么样">组合风险</button>
+          <button class="suggestion" data-question="哪些特征 PSI 有风险">特征质量</button>
+          <button class="suggestion" data-question="展示从数据源到决策的血缘">血缘</button>
+          <button class="suggestion" data-question="创建一个高风险处置案件">HITL 动作</button>
+        </div>
+        <form class="composer agent-composer" id="agent-form"><input id="agent-question" autocomplete="off" placeholder="问平台里的任何模块…" maxlength="300"><button class="primary" id="agent-run" type="submit">Run</button></form>
+        <div id="agent-output" class="empty-agent">Ask a cross-module question. Every answer keeps a trace.</div>
+      </aside>
     </div>
-
-    <section>
-      <h2>EG/CG 分档首逾期率对比（分子分母同时下发）</h2>
-      <table><thead><tr><th>档</th><th>EG 决策/放款/到期≥1天</th><th>EG 首逾期率%</th><th>CG 决策/放款/到期≥1天</th><th>CG 首逾期率%</th></tr></thead>
-      <tbody>${tierRows}</tbody></table>
-      <p class="note">首逾 = 到期≥1天未结清（T+1 可判）· 样本过小的档不参与比较</p>
-    </section>
-
-    <section>
-      <h2>老客首逾期周趋势</h2>
-      <table><thead><tr><th>到期周</th><th>单数</th><th>首逾期率%</th><th>dpd7%</th><th>soft7%</th></tr></thead>
-      <tbody>${rows}</tbody></table>
-    </section>`
-}
-
-loadKpi()
-</script>
+  </main>
+  <script src="/static/app.js"></script>
 </body>
 </html>
